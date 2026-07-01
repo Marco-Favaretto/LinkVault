@@ -6,5 +6,44 @@
     <body>
         <script src="./js/bootstrap.bundle.min.js"></script>
         <script src="./js/dashboard.js"></script>
+        <div class="container-fluid py-4">
+            <div class="row g-4">
+                
+                <aside class="col-md-3">
+                    <div class="card p-3 mb-3 shadow-sm">
+                        <h5 class="card-title mb-3">Filtri</h5>
+                        
+                        <div class="mb-4">
+                            <h6 class="text-muted small text-uppercase">Categorie</h6>
+                            <div id="filter-categories" class="list-group list-group-flush">
+                            </div>
+                        </div>
+
+                        <div>
+                            <h6 class="text-muted small text-uppercase">Tag</h6>
+                            <div id="filter-tags" class="d-flex flex-wrap gap-1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card p-3 shadow-sm">
+                        <h5 class="card-title mb-3">Dati</h5>
+                        <button id="btn-export" class="btn btn-outline-primary btn-sm w-100 mb-2">Esporta JSON</button>
+                        <label for="input-import" class="btn btn-outline-secondary btn-sm w-100 m-0">Importa JSON</label>
+                        <input type="file" id="input-import" accept=".json" class="d-none">
+                    </div>
+                </aside>
+
+                <main class="col-md-9">
+                    <div class="mb-4">
+                        <input type="search" id="search-bar" class="form-control form-control-lg shadow-sm" placeholder="Cerca per titolo, url, tag o descrizione...">
+                    </div>
+
+                    <div id="links-container" class="row row-cols-1 row-cols-md-2 g-3">
+                        </div>
+                </main>
+
+            </div>
+        </div>
     </body>
 </html>
