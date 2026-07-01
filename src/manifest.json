@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "LinkVault",
+  "description": "Salva e organizza i tuoi link.",
+  "version": "1.0",
+
+  "permissions": [
+    "storage",
+    "tabs"
+  ]
+}
