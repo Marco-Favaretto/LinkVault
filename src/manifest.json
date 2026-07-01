@@ -6,6 +6,11 @@
 
   "permissions": [
     "storage",
-    "tabs"
-  ]
+    "tabs",
+    "downloads"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "options_page": "dashboard.html"
 }
