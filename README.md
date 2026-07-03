@@ -23,7 +23,7 @@ You can install this extension manually by loading it as an unpacked extension i
 6. Select the extracted extension folder.
 7. The extension will be installed and ready to use.
 
-### Safari (macOS)
+### Safari (macOS) - (AI suggestion, not tested)
 1. Download the source code and extract it to a folder on your computer.
 2. Open Terminal and convert the extension for Safari by running:
     ```sh
