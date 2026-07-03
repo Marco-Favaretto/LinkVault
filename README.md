@@ -5,8 +5,11 @@ Project made for the purpose of developing a browser extension.
 - save a link
 - categorize and tag your saved links
 - search and filter your saved links
+- import and export via json file
+- dark/light mode
+- delete all links
 
-## How To Use.
+## Basic use
 Clicking on the extension logo will open up a popup with a form. On the form you can insert a title, the link, a category, one or more tags (separated by comma) and an optional description. By default, title and link fields are automatically filled with the current page's info.
 
 Clicking on the `gestisci` button on the top right corner will open a new tab with a dashboard. Here you can see all your links, search (text-search matching on title, category, tags and description) and filter them byt category and tags.

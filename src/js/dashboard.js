@@ -28,6 +28,7 @@ function setupEventListeners() {
     document.getElementById('input-import').addEventListener('change', importJSON);
     document.getElementById('form-edit-link').addEventListener('submit', saveEdit);
     document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+    document.getElementById('btn-clear-all').addEventListener('click', clearAllLinks);
 }
 
 function renderAll() {
@@ -350,4 +351,20 @@ async function toggleTheme() {
     await chrome.storage.local.set({ theme: newTheme });
     
     applyTheme(newTheme);
+}
+
+async function clearAllLinks() {
+    const firstConfirm = confirm("Sei sicuro di voler cancellare TUTTI i link salvati? Questa azione e' irreversibile.");
+    if (!firstConfirm) return;
+
+    const secondConfirm = confirm("ATTENZIONE: Stai per eliminare definitivamente ogni dato. Confermi davvero?");
+    if (!secondConfirm) return;
+
+    allLinks = [];
+    
+    await chrome.storage.local.set({ links: [] });
+    
+    renderAll();
+    
+    alert("Database svuotato con successo.");
 }
