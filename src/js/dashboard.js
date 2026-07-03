@@ -1,6 +1,6 @@
 let allLinks = [];
 let activeCategory = null;
-let activeTag = null;
+let activeTags = new Set();
 
 document.addEventListener('DOMContentLoaded', () => {
     init();
@@ -60,7 +60,7 @@ function renderFilters() {
     // Render Tag
     tagsDiv.innerHTML = '';
     tags.forEach(tag => {
-        const isActive = activeTag === tag;
+        const isActive = activeTags.has(tag);
         tagsDiv.innerHTML += `
             <button class="btn ${isActive ? 'btn-primary' : 'btn-outline-secondary'} btn-sm" data-tag="${tag}">
                 #${tag}
@@ -85,8 +85,11 @@ function attachFilterListeners() {
     document.querySelectorAll('#filter-tags button').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const clickedTag = e.target.dataset.tag;
-            // Se clicco su un tag già attivo, lo disattivo
-            activeTag = activeTag === clickedTag ? null : clickedTag;
+            if (activeTags.has(clickedTag)) {
+                activeTags.delete(clickedTag);
+            } else {
+                activeTags.add(clickedTag);
+            }
             renderFilters();
             applyFiltersAndSearch();
         });
@@ -98,13 +101,13 @@ function applyFiltersAndSearch() {
     const searchTerm = document.getElementById('search-bar').value.toLowerCase();
 
     const filtered = allLinks.filter(link => {
-        // Categoria
         if (activeCategory && link.category !== activeCategory) return false;
 
-        // Tag
-        if (activeTag && (!link.tags || !link.tags.includes(activeTag))) return false;
+        if (activeTags.size > 0) {
+            const hasAllTags = Array.from(activeTags).every(tag => link.tags && link.tags.includes(tag));
+            if (!hasAllTags) return false;
+        }
 
-        // Testo (titolo, url, descrizione, tag)
         if (searchTerm) {
             const matchesTitle = link.title?.toLowerCase().includes(searchTerm);
             const matchesUrl = link.url?.toLowerCase().includes(searchTerm);
