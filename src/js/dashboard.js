@@ -120,28 +120,51 @@ function applyFiltersAndSearch() {
     renderLinks(filtered);
 }
 
-// Inietta le card dei link nel container principale
+// Inietta le righe della tabella
 function renderLinks(linksToRender) {
     const container = document.getElementById('links-container');
     
     if (linksToRender.length === 0) {
-        container.innerHTML = '<div class="col-100 text-muted w-100 text-center py-5">Nessun link trovato.</div>';
+        container.innerHTML = '<tr><td colspan="4" class="text-muted text-center py-5">Nessun link trovato.</td></tr>';
         return;
     }
 
     container.innerHTML = linksToRender.map(link => `
-        <div class="col">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title text-truncate">${link.title || link.url}</h5>
-                    <h6 class="card-subtitle mb-2 text-muted small">${link.category || 'Nessuna categoria'}</h6>
-                    <p class="card-text small text-secondary">${link.description || 'Nessuna descrizione.'}</p>
-                    <div class="mb-3">
-                        ${(link.tags || []).map(t => `<span class="badge bg-light text-dark me-1">#${t}</span>`).join('')}
-                    </div>
-                    <a href="${link.url}" target="_blank" class="btn btn-primary btn-sm">Apri link</a>
+        <tr>
+            <!-- Titolo e URL -->
+            <td>
+                <div class="fw-bold text-truncate" style="max-width: 250px;" title="${link.title || link.url}">
+                    ${link.title || link.url}
                 </div>
-            </div>
-        </div>
+                <div class="text-muted small text-truncate" style="max-width: 250px;">
+                    <a href="${link.url}" target="_blank" class="text-decoration-none text-secondary">${link.url}</a>
+                </div>
+            </td>
+            
+            <!-- Categoria -->
+            <td>
+                <span class="badge bg-secondary-subtle text-secondary-emphasis">
+                    ${link.category || 'Generale'}
+                </span>
+            </td>
+            
+            <!-- Descrizione e Tag -->
+            <td>
+                <div class="small text-secondary text-truncate mb-1" style="max-width: 350px;" title="${link.description || ''}">
+                    ${link.description || '<span class="text-muted italic small">Nessuna descrizione</span>'}
+                </div>
+                <div class="d-flex flex-wrap gap-1">
+                    ${(link.tags || []).map(t => `<span class="badge bg-light text-dark border small">#${t}</span>`).join('')}
+                </div>
+            </td>
+            
+            <!-- Azioni -->
+            <td class="text-end">
+                <a href="${link.url}" target="_blank" class="btn btn-sm btn-outline-primary" title="Apri Link">
+                    Apri link
+                </a>
+                <!-- In futuro qui metteremo il tasto Elimina -->
+            </td>
+        </tr>
     `).join('');
 }

@@ -40,8 +40,22 @@
                         <input type="search" id="search-bar" class="form-control form-control-lg shadow-sm" placeholder="Cerca per titolo, url, tag o descrizione...">
                     </div>
 
-                    <div id="links-container" class="row row-cols-1 row-cols-md-2 g-3">
-                        </div>
+                    <!-- Tabella dei Link -->
+                    <div class="table-responsive bg-white rounded shadow-sm">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col" style="width: 30%;">Titolo / URL</th>
+                                    <th scope="col" style="width: 15%;">Categoria</th>
+                                    <th scope="col" style="width: 35%;">Descrizione / Tag</th>
+                                    <th scope="col" scope="col" style="width: 10%;" class="text-end">Azioni</th>
+                                </tr>
+                            </thead>
+                            <tbody id="links-container">
+                                <!-- tr da dashboard.js -->
+                            </tbody>
+                        </table>
+                    </div>
                 </main>
 
             </div>
