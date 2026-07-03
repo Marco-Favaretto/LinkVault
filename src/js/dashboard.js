@@ -7,6 +7,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function init() {
+    const themeData = await chrome.storage.local.get('theme');
+    const currentTheme = themeData.theme || 'light';
+    applyTheme(currentTheme);
+
     // Recupero dati da chrome.storage.local
     const data = await chrome.storage.local.get('links');
     allLinks = data.links || [];
@@ -20,9 +24,10 @@ async function init() {
 
 function setupEventListeners() {
     document.getElementById('search-bar').addEventListener('input', applyFiltersAndSearch);
-    
     document.getElementById('btn-export').addEventListener('click', exportJSON);
     document.getElementById('input-import').addEventListener('change', importJSON);
+    document.getElementById('form-edit-link').addEventListener('submit', saveEdit);
+    document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
 }
 
 function renderAll() {
@@ -161,16 +166,27 @@ function renderLinks(linksToRender) {
                     ${(link.tags || []).map(t => `<span class="badge bg-light text-dark border small">#${t}</span>`).join('')}
                 </div>
             </td>
-            
             <!-- Azioni -->
             <td class="text-end">
                 <a href="${link.url}" target="_blank" class="btn btn-sm btn-outline-primary" title="Apri Link">
-                    Apri link
+                    Apri
                 </a>
-                <!-- In futuro qui metteremo il tasto Elimina -->
+                <button class="btn btn-sm btn-outline-warning btn-edit" data-id="${link.id}" title="Modifica Link">
+                    Modifica
+                </button>
+                <button class="btn btn-sm btn-outline-danger btn-delete" data-id="${link.id}" title="Elimina Link">
+                    Elimina
+                </button>
             </td>
         </tr>
     `).join('');
+
+    document.querySelectorAll('.btn-edit').forEach(btn => {
+        btn.addEventListener('click', openEditModal);
+    });
+    document.querySelectorAll('.btn-delete').forEach(btn => {
+        btn.addEventListener('click', deleteLink);
+    });
 }
 
 function exportJSON() {
@@ -243,4 +259,95 @@ function importJSON(e) {
     };
 
     reader.readAsText(file);
+}
+
+// Istanza modale bootstrap per poterlo chiudere via codice
+let bootstrapEditModal = null;
+
+function openEditModal(e) {
+    const linkId = e.target.dataset.id;
+    const link = allLinks.find(l => l.id === linkId);
+    
+    if (!link) return;
+
+    // Popola i campi del modale con i dati correnti
+    document.getElementById('edit-id').value = link.id;
+    document.getElementById('edit-title').value = link.title || '';
+    document.getElementById('edit-url').value = link.url || '';
+    document.getElementById('edit-category').value = link.category === 'Generale' ? '' : (link.category || '');
+    document.getElementById('edit-tags').value = (link.tags || []).join(', ');
+    document.getElementById('edit-description').value = link.description || '';
+
+    // Mostra modale usando api js bootstrap
+    if (!bootstrapEditModal) {
+        bootstrapEditModal = new bootstrap.Modal(document.getElementById('editModal'));
+    }
+    bootstrapEditModal.show();
+}
+
+async function saveEdit(e) {
+    e.preventDefault();
+
+    const linkId = document.getElementById('edit-id').value;
+    
+    // Trova l'indice del link all'interno dell'array globale
+    const index = allLinks.findIndex(l => l.id === linkId);
+    if (index === -1) return;
+
+    // Pulisce i tag inseriti
+    const tagsInput = document.getElementById('edit-tags').value;
+    const tagsArray = tagsInput ? tagsInput.split(',').map(t => t.trim().toLowerCase()).filter(t => t) : [];
+
+    // Aggiorna l'oggetto mantenendo lo stato 'favorite' invariato
+    allLinks[index] = {
+        ...allLinks[index],
+        title: document.getElementById('edit-title').value,
+        url: document.getElementById('edit-url').value,
+        category: document.getElementById('edit-category').value.trim() || 'Generale',
+        tags: tagsArray,
+        description: document.getElementById('edit-description').value.trim()
+    };
+
+    // Salva nello storage e aggiorna la vista
+    await chrome.storage.local.set({ links: allLinks });
+    renderAll();
+
+    // Chiude il modale
+    bootstrapEditModal.hide();
+}
+
+async function deleteLink(e) {
+    const linkId = e.target.dataset.id;
+    const link = allLinks.find(l => l.id === linkId);
+
+    if (!link) return;
+
+    const confirmDelete = confirm(`Sei sicuro di voler eliminare il link "${link.title || link.url}"?`);
+    if (!confirmDelete) return;
+
+    allLinks = allLinks.filter(l => l.id !== linkId);
+
+    await chrome.storage.local.set({ links: allLinks });
+
+    renderAll();
+}
+
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-bs-theme', theme);
+    
+    // Aggiorna bottone
+    const themeBtn = document.getElementById('theme-toggle');
+    if (themeBtn) {
+        themeBtn.innerHTML = theme === 'dark' ? 'Join the light side' : 'Join the dark side';
+    }
+}
+
+async function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    // Salva preferenza nel browser
+    await chrome.storage.local.set({ theme: newTheme });
+    
+    applyTheme(newTheme);
 }

@@ -1,0 +1,30 @@
+/* --- REGOLAZIONI TESTO NERO PER I BOTTONI (LIGHT & DARK MODE) --- */
+
+#filter-categories .list-group-item.active,
+#filter-tags .btn-primary {
+    color: #000000 !important;
+}
+
+.btn-outline-primary:hover, 
+.btn-outline-primary:active {
+    color: #000000 !important;
+}
+
+.btn-outline-warning,
+.btn-outline-warning:hover,
+.btn-outline-warning:active {
+    color: #000000 !important;
+}
+
+.btn-outline-danger:hover,
+.btn-outline-danger:active {
+    color: #000000 !important;
+}
+
+/* Correzione badge tag non attivi in Dark Mode per vederli meglio */
+[data-bs-theme="dark"] .btn-outline-secondary {
+    color: #ffffff !important;
+}
+[data-bs-theme="dark"] .btn-outline-secondary:hover {
+    color: #000000 !important;
+}
