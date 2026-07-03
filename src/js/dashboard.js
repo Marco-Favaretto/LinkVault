@@ -21,7 +21,8 @@ async function init() {
 function setupEventListeners() {
     document.getElementById('search-bar').addEventListener('input', applyFiltersAndSearch);
     
-    // TODO tasti e listener export/import
+    document.getElementById('btn-export').addEventListener('click', exportJSON);
+    document.getElementById('input-import').addEventListener('change', importJSON);
 }
 
 function renderAll() {
@@ -170,4 +171,76 @@ function renderLinks(linksToRender) {
             </td>
         </tr>
     `).join('');
+}
+
+function exportJSON() {
+    if (allLinks.length === 0) {
+        alert("Non ci sono link da esportare.");
+        return;
+    }
+
+    const dataStr = JSON.stringify({ links: allLinks }, null, 2);
+    
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    // Crea un elemento 'a' temporaneo per simulare il click di download
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.href = url;
+    downloadAnchor.download = `linkvault_backup_${Date.now()}.json`;
+    
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    
+    document.body.removeChild(downloadAnchor);
+    URL.revokeObjectURL(url);
+}
+
+function importJSON(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    
+    reader.onload = async (event) => {
+        try {
+            const parsedData = JSON.parse(event.target.result);
+
+            // Validazione base del formato
+            if (!parsedData || !Array.isArray(parsedData.links)) {
+                throw new Error("Formato JSON non valido. Deve contenere un array 'links'.");
+            }
+
+            // Recupera i link attuali per non sovrascriverli (unione dei dati)
+            const data = await chrome.storage.local.get('links');
+            const currentLinks = data.links || [];
+
+            // Opzionale: Evita duplicati identici controllando l'URL
+            const existingUrls = new Set(currentLinks.map(l => l.url));
+            const newLinksFiltered = parsedData.links.filter(l => !existingUrls.has(l.url));
+
+            if (newLinksFiltered.length === 0) {
+                alert("Tutti i link nel file sono già presenti nell'estensione.");
+                return;
+            }
+
+            // Unisci i vecchi link con i nuovi filtrati
+            allLinks = [...currentLinks, ...newLinksFiltered];
+
+            // Salva nello storage locale
+            await chrome.storage.local.set({ links: allLinks });
+
+            // Aggiorna l'interfaccia visiva
+            renderAll();
+            alert(`Importazione completata! Aggiunti ${newLinksFiltered.length} nuovi link.`);
+
+        } catch (err) {
+            alert(`Errore durante l'importazione: ${err.message}`);
+        } finally {
+            // Resetta l'input file per permettere di ricaricare lo stesso file in seguito
+            e.target.value = '';
+        }
+    };
+
+    reader.readAsText(file);
 }
