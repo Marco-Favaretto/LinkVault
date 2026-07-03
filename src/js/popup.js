@@ -2,6 +2,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // recupera la scheda attiva
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     
+    const themeData = await chrome.storage.local.get('theme');
+    document.documentElement.setAttribute('data-bs-theme', themeData.theme || 'light');
+
     if (tab) {
         document.getElementById('input-title').value = tab.title || '';
         document.getElementById('input-url').value = tab.url || '';
