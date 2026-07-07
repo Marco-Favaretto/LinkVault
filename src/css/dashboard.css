@@ -1,4 +1,29 @@
+html,
+body {
+    height: 100vh;
+    overflow: hidden;
+}
+
+.container-fluid {
+    height: 100%;
+}
+
+.container-fluid > .row {
+    height: 100%;
+}
+
 /* --- TABELLA: Pulsanti d'azione (Fix Contrasto Light & Dark Mode) --- */
+
+.table-scroll {
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.table-scroll thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
 
 /* --- 1. CONFIGURAZIONE DI DEFAULT (LIGHT MODE) --- */
 
