@@ -65,8 +65,16 @@ function renderFilters() {
     });
 
     // Render Tag
+    const sortedTags = new Set(
+        [...tags].sort((a, b) =>
+            a.localeCompare(b, undefined, {
+                numeric: true,
+                sensitivity: "base"
+            })
+        )
+    );
     tagsDiv.innerHTML = '';
-    tags.forEach(tag => {
+    sortedTags.forEach(tag => {
         const isActive = activeTags.has(tag);
         tagsDiv.innerHTML += `
             <button class="btn ${isActive ? 'btn-primary' : 'btn-outline-secondary'} btn-sm" data-tag="${tag}">
