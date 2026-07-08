@@ -25,6 +25,13 @@ body {
     z-index: 10;
 }
 
+.table th, .table td {
+    padding-top: 0.4rem !important;
+    padding-bottom: 0.4rem !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+}
+
 /* --- 1. CONFIGURAZIONE DI DEFAULT (LIGHT MODE) --- */
 
 .btn-outline-warning {

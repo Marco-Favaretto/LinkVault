@@ -194,49 +194,50 @@ function renderLinks(linksToRender) {
 
     container.innerHTML = linksToRender.map(link => `
         <tr>
-            <!-- Titolo e URL -->
             <td>
-                <div class="fw-bold text-truncate" style="max-width: 250px;" title="${link.title || link.url}">
-                    ${link.title || link.url}
+                <div class="fw-bold text-truncate" style="max-width: 250px; font-size: 0.9rem;">
+                    ${link.title || 'Senza Titolo'}
                 </div>
-                <div class="text-muted small text-truncate" style="max-width: 250px;">
-                    <a href="${link.url}" target="_blank" class="text-decoration-none text-secondary">${link.url}</a>
+                <div class="text-muted text-truncate" style="max-width: 250px; font-size: 0.75rem;">
+                    ${link.url}
                 </div>
             </td>
             
-            <!-- Autori -->
-            <td>        
-                <div class="d-flex flex-wrap gap-1">
-                    ${(link.authors || []).map(a => `<span class="badge bg-light text-dark border small">#${a}</span>`).join('')}
-                </div>
-            </td>
-
-            <!-- Categoria -->
             <td>
-                <span class="badge bg-secondary-subtle text-secondary-emphasis">
+                <span class="badge bg-light text-dark border rounded-pill px-2 py-0.5" style="font-size: 0.75rem;">
+                    ${link.author || 'Anonimo'}
+                </span>
+            </td>
+            
+            <td>
+                <span class="badge bg-secondary-subtle text-secondary-emphasis rounded px-2 py-0.5" style="font-size: 0.75rem;">
                     ${link.category || 'Generale'}
                 </span>
             </td>
-            <!-- Descrizione e Tag -->
+            
             <td>
-                <div class="small text-secondary text-truncate mb-1" style="max-width: 350px;" title="${link.description || ''}">
-                    ${link.description || '<span class="text-muted italic small">Nessuna descrizione</span>'}
-                </div>
+                ${link.description ? `<div class="text-secondary text-truncate mb-0.5" style="max-width: 300px; font-size: 0.75rem;">${link.description}</div>` : ''}
                 <div class="d-flex flex-wrap gap-1">
-                    ${(link.tags || []).map(t => `<span class="badge bg-light text-dark border small">#${t}</span>`).join('')}
+                    ${(link.tags || []).map(tag => `
+                        <span class="badge bg-light text-dark border border-primary-subtle rounded-pill small" style="font-size: 0.7rem; padding: 0.15rem 0.4rem;">
+                            #${tag}
+                        </span>
+                    `).join('')}
                 </div>
             </td>
-            <!-- Azioni -->
-            <td class="text-end">
-                <a href="${link.url}" target="_blank" class="btn btn-sm btn-outline-primary" title="Apri Link">
-                    Apri
-                </a>
-                <button class="btn btn-sm btn-outline-warning btn-edit" data-id="${link.id}" title="Modifica Link">
-                    Modifica
-                </button>
-                <button class="btn btn-sm btn-outline-danger btn-delete" data-id="${link.id}" title="Elimina Link">
-                    Elimina
-                </button>
+            
+            <td>
+                <div class="d-flex gap-1 justify-content-end">
+                    <a href="${link.url}" target="_blank" class="btn btn-sm btn-outline-primary" style="padding: 0.15rem 0.4rem; font-size: 0.75rem;" title="Apri Link">
+                        Apri
+                    </a>
+                    <button class="btn btn-sm btn-outline-warning btn-edit" data-id="${link.id}" style="padding: 0.15rem 0.4rem; font-size: 0.75rem;" title="Modifica Link">
+                        Modifica
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger btn-delete" data-id="${link.id}" style="padding: 0.15rem 0.4rem; font-size: 0.75rem;" title="Elimina Link">
+                        Elimina
+                    </button>
+                </div>
             </td>
         </tr>
     `).join('');
