@@ -204,9 +204,13 @@ function renderLinks(linksToRender) {
             </td>
             
             <td>
-                <span class="badge bg-light text-dark border rounded-pill px-2 py-0.5" style="font-size: 0.75rem;">
-                    ${link.author || 'Anonimo'}
-                </span>
+                <div class="d-flex flex-wrap gap-1">
+                    ${(link.authors || []).map(author => `
+                        <span class="badge bg-light text-dark border border-primary-subtle rounded-pill small" style="font-size: 0.7rem; padding: 0.15rem 0.4rem;">
+                            #${author}
+                        </span>
+                    `).join('')}
+                </div>
             </td>
             
             <td>
@@ -377,6 +381,19 @@ async function saveEdit(e) {
 
     // Salva nello storage e aggiorna la vista
     await chrome.storage.local.set({ links: allLinks });
+
+    const remainingTags = new Set();
+    allLinks.forEach(link => {
+        if (link.tags) link.tags.forEach(t => remainingTags.add(t));
+    });
+
+    // rimozione tag in caso di cancellazione
+    activeTags.forEach(activeTag => {
+        if (!remainingTags.has(activeTag)) {
+            activeTags.delete(activeTag);
+        }
+    });
+
     renderAll();
 
     // Chiude il modale

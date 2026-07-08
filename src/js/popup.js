@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const tagsArray = tagsInput ? tagsInput.split(',').map(t => t.trim().toLowerCase()).filter(t => t) : [];
 
         // estrae autori inseriti
-        const authsInput = document.getElementById('edit-auths').value;
+        const authsInput = document.getElementById('input-author').value;
         const authsArray = authsInput ? authsInput.split(',').map(a => a.trim().toLowerCase()).filter(a => a) : [];
 
         // crea oggetto link
