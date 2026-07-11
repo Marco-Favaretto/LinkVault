@@ -10,8 +10,9 @@
         <div class="container-fluid py-4">
             <div class="row g-4">
                 
-                <aside class="col-md-3">
-                    <div class="card p-3 mb-3 shadow-sm">
+                <aside class="col-md-3 d-flex flex-column sidebar-sticky">
+    
+                    <div class="card p-3 mb-3 shadow-sm sidebar-scrollable-card">
                         <h5 class="card-title mb-3">Filtri</h5>
                         
                         <div class="mb-4">
@@ -33,7 +34,7 @@
                         </div>
                     </div>
 
-                    <div class="card p-3 shadow-sm">
+                    <div class="card p-3 shadow-sm mt-auto">
                         <h5 class="card-title mb-3">Dati</h5>
                         <button id="btn-export" class="btn btn-outline-primary btn-sm w-100 mb-2">Esporta JSON</button>
                         <label for="input-import" class="btn btn-outline-secondary btn-sm w-100 m-0">Importa JSON</label>
@@ -41,6 +42,7 @@
 
                         <button id="btn-clear-all" class="btn btn-sm btn-outline-danger mt-1">Svuota Database</button>
                     </div>
+
                 </aside>
 
                 <main class="col-md-9 d-flex flex-column h-100">
