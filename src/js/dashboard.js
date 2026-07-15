@@ -33,12 +33,12 @@ function setupEventListeners() {
 }
 
 function renderAll() {
-    renderFilters();
-    applyFiltersAndSearch();
+    renderFilters(allLinks);
+    applyFiltersAndSearch(allLinks);
 }
 
 // Estrae categorie e tag e autori unici e li stampa nella sidebar
-function renderFilters() {
+function renderFilters(linkList) {
     const categoriesDiv = document.getElementById('filter-categories');
     const authsDiv = document.getElementById('filter-authors');
     const tagsDiv = document.getElementById('filter-tags');
@@ -48,7 +48,7 @@ function renderFilters() {
     const tags = new Set();
     const authors = new Set();
 
-    allLinks.forEach(link => {
+    linkList.forEach(link => {
         if (link.category) categories.add(link.category);
         if (link.authors) link.authors.forEach(a => authors.add(a))
         if (link.tags) link.tags.forEach(t => tags.add(t));
@@ -114,8 +114,9 @@ function attachFilterListeners() {
     document.querySelectorAll('#filter-categories button').forEach(btn => {
         btn.addEventListener('click', (e) => {
             activeCategory = e.target.dataset.category || null;
-            renderFilters();
-            applyFiltersAndSearch();
+            const validLinks = filterFilters();
+            renderFilters(validLinks);
+            applyFiltersAndSearch(validLinks);
         });
     });
 
@@ -148,11 +149,32 @@ function attachFilterListeners() {
     });
 }
 
+function filterFilters() {
+    let validLinks = []
+    const tags = new Set();
+    const authors = new Set();
+
+    if(activeCategory != null) {
+        // allLinks.forEach(link => {
+        //     if(link.category === activeCategory) {
+        //         link.tags.forEach(t => tags.add(t));
+        //         link.authors.forEach(a => authors.add(a));                
+        //     }
+        // })
+        allLinks.forEach(link => {
+            if(link.category === activeCategory) validLinks.push(link);
+        })
+    } else {
+        validLinks = allLinks;
+    }
+    return validLinks;
+}
+
 // Applica filtri + ricerca testuale
-function applyFiltersAndSearch() {
+function applyFiltersAndSearch(linkList) {
     const searchTerm = document.getElementById('search-bar').value.toLowerCase();
 
-    const filtered = allLinks.filter(link => {
+    const filtered = linkList.filter(link => {
         if (activeCategory && link.category !== activeCategory) return false;
 
         if (activeAuths.size > 0) {
