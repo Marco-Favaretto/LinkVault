@@ -24,7 +24,7 @@ async function init() {
 }
 
 function setupEventListeners() {
-    document.getElementById('search-bar').addEventListener('input', applyFiltersAndSearch);
+    document.getElementById('search-bar').addEventListener('input', renderAll);
     document.getElementById('btn-export').addEventListener('click', exportJSON);
     document.getElementById('input-import').addEventListener('change', importJSON);
     document.getElementById('form-edit-link').addEventListener('submit', saveEdit);
@@ -33,8 +33,9 @@ function setupEventListeners() {
 }
 
 function renderAll() {
-    renderFilters(allLinks);
-    applyFiltersAndSearch(allLinks);
+    const validLinks = filterFilters();
+    renderFilters(validLinks);
+    applyFiltersAndSearch(validLinks);
 }
 
 // Estrae categorie e tag e autori unici e li stampa nella sidebar
@@ -48,8 +49,11 @@ function renderFilters(linkList) {
     const tags = new Set();
     const authors = new Set();
 
-    linkList.forEach(link => {
+    allLinks.forEach(link => {
         if (link.category) categories.add(link.category);
+    });
+
+    linkList.forEach(link => {
         if (link.authors) link.authors.forEach(a => authors.add(a))
         if (link.tags) link.tags.forEach(t => tags.add(t));
     });
@@ -114,9 +118,9 @@ function attachFilterListeners() {
     document.querySelectorAll('#filter-categories button').forEach(btn => {
         btn.addEventListener('click', (e) => {
             activeCategory = e.target.dataset.category || null;
-            const validLinks = filterFilters();
-            renderFilters(validLinks);
-            applyFiltersAndSearch(validLinks);
+            activeTags.clear();
+            activeAuths.clear();
+            renderAll();
         });
     });
 
@@ -129,8 +133,7 @@ function attachFilterListeners() {
             } else {
                 activeAuths.add(clickedAuth);
             }
-            renderFilters();
-            applyFiltersAndSearch();
+            renderAll();
         });
     });
 
@@ -143,8 +146,7 @@ function attachFilterListeners() {
             } else {
                 activeTags.add(clickedTag);
             }
-            renderFilters();
-            applyFiltersAndSearch();
+            renderAll();
         });
     });
 }
