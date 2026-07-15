@@ -33,6 +33,31 @@ function setupEventListeners() {
 }
 
 function renderAll() {
+    const existingCategories = new Set();
+    const existingAuthors = new Set();
+    const existingTags = new Set();
+
+    allLinks.forEach(link => {
+        if (link.category) existingCategories.add(link.category);
+        if (link.authors) link.authors.forEach(a => existingAuthors.add(a));
+        if (link.tags) link.tags.forEach(t => existingTags.add(t));
+    });
+
+    // Reset filtri attivi non più esistenti
+    if (activeCategory && !existingCategories.has(activeCategory)) {
+        activeCategory = null;
+    }
+    activeTags.forEach(activeTag => {
+        if (!existingTags.has(activeTag)) {
+            activeTags.delete(activeTag);
+        }
+    });
+    activeAuths.forEach(activeAuth => {
+        if (!existingAuthors.has(activeAuth)) {
+            activeAuths.delete(activeAuth);
+        }
+    });
+
     const validLinks = filterFilters();
     renderFilters(validLinks);
     applyFiltersAndSearch(validLinks);
@@ -405,18 +430,6 @@ async function saveEdit(e) {
 
     // Salva nello storage e aggiorna la vista
     await chrome.storage.local.set({ links: allLinks });
-
-    const remainingTags = new Set();
-    allLinks.forEach(link => {
-        if (link.tags) link.tags.forEach(t => remainingTags.add(t));
-    });
-
-    // rimozione tag in caso di cancellazione
-    activeTags.forEach(activeTag => {
-        if (!remainingTags.has(activeTag)) {
-            activeTags.delete(activeTag);
-        }
-    });
 
     renderAll();
 
