@@ -197,11 +197,8 @@ function filterFilters() {
     return validLinks;
 }
 
-// Applica filtri + ricerca testuale
-function applyFiltersAndSearch(linkList) {
-    const searchTerm = document.getElementById('search-bar').value.toLowerCase();
-
-    const filtered = linkList.filter(link => {
+function getFilteredLinks(linkList, searchTerm) {
+    return linkList.filter(link => {
         if (activeCategory && link.category !== activeCategory) return false;
 
         if (activeAuths.size > 0) {
@@ -228,6 +225,13 @@ function applyFiltersAndSearch(linkList) {
 
         return true;
     });
+}
+
+// Applica filtri + ricerca testuale
+function applyFiltersAndSearch(linkList) {
+    const searchTerm = document.getElementById('search-bar').value.toLowerCase();
+
+    const filtered = getFilteredLinks(linkList, searchTerm)
 
     renderLinks(filtered);
 }
@@ -304,12 +308,16 @@ function renderLinks(linksToRender) {
 }
 
 function exportJSON() {
-    if (allLinks.length === 0) {
+    const searchTerm = document.getElementById('search-bar').value.toLowerCase();
+
+    const linksToSave = getFilteredLinks(allLinks, searchTerm)
+
+    if (linksToSave.length === 0) {
         alert("Non ci sono link da esportare.");
         return;
     }
 
-    const dataStr = JSON.stringify({ links: allLinks }, null, 2);
+    const dataStr = JSON.stringify({ links: linksToSave }, null, 2);
     
     const blob = new Blob([dataStr], { type: "application/json" });
     const url = URL.createObjectURL(blob);
