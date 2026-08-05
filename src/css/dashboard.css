@@ -12,6 +12,21 @@ body {
     height: 100%;
 }
 
+
+/* Sidebar fissa all'altezza dello schermo */
+.sidebar-sticky {
+    height: calc(100vh - 2rem);
+    position: sticky;
+    top: 1rem;
+}
+
+/* Contenitore filtri che attiva lo scroll interno */
+.sidebar-scrollable-card {
+    flex-grow: 1;
+    overflow-y: auto;
+    min-height: 0;
+}
+
 /* --- TABELLA: Pulsanti d'azione (Fix Contrasto Light & Dark Mode) --- */
 
 .table-scroll {

@@ -24,7 +24,7 @@ async function init() {
 }
 
 function setupEventListeners() {
-    document.getElementById('search-bar').addEventListener('input', applyFiltersAndSearch);
+    document.getElementById('search-bar').addEventListener('input', renderAll);
     document.getElementById('btn-export').addEventListener('click', exportJSON);
     document.getElementById('input-import').addEventListener('change', importJSON);
     document.getElementById('form-edit-link').addEventListener('submit', saveEdit);
@@ -33,12 +33,38 @@ function setupEventListeners() {
 }
 
 function renderAll() {
-    renderFilters();
-    applyFiltersAndSearch();
+    const existingCategories = new Set();
+    const existingAuthors = new Set();
+    const existingTags = new Set();
+
+    allLinks.forEach(link => {
+        if (link.category) existingCategories.add(link.category);
+        if (link.authors) link.authors.forEach(a => existingAuthors.add(a));
+        if (link.tags) link.tags.forEach(t => existingTags.add(t));
+    });
+
+    // Reset filtri attivi non più esistenti
+    if (activeCategory && !existingCategories.has(activeCategory)) {
+        activeCategory = null;
+    }
+    activeTags.forEach(activeTag => {
+        if (!existingTags.has(activeTag)) {
+            activeTags.delete(activeTag);
+        }
+    });
+    activeAuths.forEach(activeAuth => {
+        if (!existingAuthors.has(activeAuth)) {
+            activeAuths.delete(activeAuth);
+        }
+    });
+
+    const validLinks = filterFilters();
+    renderFilters(validLinks);
+    applyFiltersAndSearch(validLinks);
 }
 
 // Estrae categorie e tag e autori unici e li stampa nella sidebar
-function renderFilters() {
+function renderFilters(linkList) {
     const categoriesDiv = document.getElementById('filter-categories');
     const authsDiv = document.getElementById('filter-authors');
     const tagsDiv = document.getElementById('filter-tags');
@@ -50,6 +76,9 @@ function renderFilters() {
 
     allLinks.forEach(link => {
         if (link.category) categories.add(link.category);
+    });
+
+    linkList.forEach(link => {
         if (link.authors) link.authors.forEach(a => authors.add(a))
         if (link.tags) link.tags.forEach(t => tags.add(t));
     });
@@ -114,8 +143,9 @@ function attachFilterListeners() {
     document.querySelectorAll('#filter-categories button').forEach(btn => {
         btn.addEventListener('click', (e) => {
             activeCategory = e.target.dataset.category || null;
-            renderFilters();
-            applyFiltersAndSearch();
+            activeTags.clear();
+            activeAuths.clear();
+            renderAll();
         });
     });
 
@@ -128,8 +158,7 @@ function attachFilterListeners() {
             } else {
                 activeAuths.add(clickedAuth);
             }
-            renderFilters();
-            applyFiltersAndSearch();
+            renderAll();
         });
     });
 
@@ -142,17 +171,34 @@ function attachFilterListeners() {
             } else {
                 activeTags.add(clickedTag);
             }
-            renderFilters();
-            applyFiltersAndSearch();
+            renderAll();
         });
     });
 }
 
-// Applica filtri + ricerca testuale
-function applyFiltersAndSearch() {
-    const searchTerm = document.getElementById('search-bar').value.toLowerCase();
+function filterFilters() {
+    let validLinks = []
+    const tags = new Set();
+    const authors = new Set();
 
-    const filtered = allLinks.filter(link => {
+    if(activeCategory != null) {
+        // allLinks.forEach(link => {
+        //     if(link.category === activeCategory) {
+        //         link.tags.forEach(t => tags.add(t));
+        //         link.authors.forEach(a => authors.add(a));                
+        //     }
+        // })
+        allLinks.forEach(link => {
+            if(link.category === activeCategory) validLinks.push(link);
+        })
+    } else {
+        validLinks = allLinks;
+    }
+    return validLinks;
+}
+
+function getFilteredLinks(linkList, searchTerm) {
+    return linkList.filter(link => {
         if (activeCategory && link.category !== activeCategory) return false;
 
         if (activeAuths.size > 0) {
@@ -179,6 +225,13 @@ function applyFiltersAndSearch() {
 
         return true;
     });
+}
+
+// Applica filtri + ricerca testuale
+function applyFiltersAndSearch(linkList) {
+    const searchTerm = document.getElementById('search-bar').value.toLowerCase();
+
+    const filtered = getFilteredLinks(linkList, searchTerm)
 
     renderLinks(filtered);
 }
@@ -255,12 +308,16 @@ function renderLinks(linksToRender) {
 }
 
 function exportJSON() {
-    if (allLinks.length === 0) {
+    const searchTerm = document.getElementById('search-bar').value.toLowerCase();
+
+    const linksToSave = getFilteredLinks(allLinks, searchTerm)
+
+    if (linksToSave.length === 0) {
         alert("Non ci sono link da esportare.");
         return;
     }
 
-    const dataStr = JSON.stringify({ links: allLinks }, null, 2);
+    const dataStr = JSON.stringify({ links: linksToSave }, null, 2);
     
     const blob = new Blob([dataStr], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -381,18 +438,6 @@ async function saveEdit(e) {
 
     // Salva nello storage e aggiorna la vista
     await chrome.storage.local.set({ links: allLinks });
-
-    const remainingTags = new Set();
-    allLinks.forEach(link => {
-        if (link.tags) link.tags.forEach(t => remainingTags.add(t));
-    });
-
-    // rimozione tag in caso di cancellazione
-    activeTags.forEach(activeTag => {
-        if (!remainingTags.has(activeTag)) {
-            activeTags.delete(activeTag);
-        }
-    });
 
     renderAll();
 
