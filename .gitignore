@@ -1,2 +1,3 @@
 **/*.zip
 **/linkvault_backup_*.json
+**/tmp/

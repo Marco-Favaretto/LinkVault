@@ -24,10 +24,18 @@
                 <input type="text" id="input-title" class="form-control form-control-sm" required>
             </div>
 
-            <!-- URL (riempito in automatico) -->
+            <!-- Salva tutte le schede della finestra -->
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="chk-all-tabs">
+                <label class="form-check-label small" for="chk-all-tabs" id="lbl-all-tabs">
+                    Salva tutte le schede della finestra
+                </label>
+            </div>
+
+            <!-- URL (riempiti in automatico, uno per riga) -->
             <div class="mb-2">
-                <label class="form-label small mb-1">URL</label>
-                <input type="url" id="input-url" class="form-control form-control-sm" readonly required>
+                <label class="form-label small mb-1" id="lbl-urls">URL</label>
+                <textarea id="input-urls" class="form-control form-control-sm text-nowrap" rows="1" readonly required wrap="off"></textarea>
             </div>
 
             <!-- Categoria -->
@@ -58,6 +66,7 @@
             <button type="submit" class="btn btn-primary btn-sm w-100">Salva Link</button>
         </form>
 
+        <script src="./js/model.js"></script>
         <script src="./js/popup.js"></script>
     </body>
 </html>

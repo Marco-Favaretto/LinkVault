@@ -14,7 +14,13 @@ async function init() {
 
     // Recupero dati da chrome.storage.local
     const data = await chrome.storage.local.get('links');
-    allLinks = data.links || [];
+    const stored = data.links || [];
+    allLinks = stored.map(normalizeLink);
+
+    // Migrazione: vecchio formato (campo `url` singolo) -> `urls` (array)
+    if (stored.some(l => !Array.isArray(l.urls) || 'url' in l)) {
+        await chrome.storage.local.set({ links: allLinks });
+    }
 
     // Registra gli eventi per la barra di ricerca e import/export
     setupEventListeners();
@@ -30,6 +36,15 @@ function setupEventListeners() {
     document.getElementById('form-edit-link').addEventListener('submit', saveEdit);
     document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
     document.getElementById('btn-clear-all').addEventListener('click', clearAllLinks);
+
+    // Chiusura del menu contestuale di "Apri"
+    document.addEventListener('click', hideOpenMenu);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideOpenMenu(); });
+    document.addEventListener('scroll', hideOpenMenu, true);
+    window.addEventListener('blur', hideOpenMenu);
+    document.addEventListener('contextmenu', (e) => {
+        if (!e.target.closest('.btn-open-all')) hideOpenMenu();
+    });
 }
 
 function renderAll() {
@@ -215,7 +230,7 @@ function getFilteredLinks(linkList, searchTerm) {
 
         if (searchTerm) {
             const matchesTitle = link.title?.toLowerCase().includes(searchTerm);
-            const matchesUrl = link.url?.toLowerCase().includes(searchTerm);
+            const matchesUrl = link.urls?.some(u => u.toLowerCase().includes(searchTerm));
             const matchesDesc = link.description?.toLowerCase().includes(searchTerm);
             const matchesTags = link.tags?.some(t => t.toLowerCase().includes(searchTerm));
             const matchesAuths = link.authors?.some(a => a.toLowerCase().includes(searchTerm));
@@ -251,8 +266,8 @@ function renderLinks(linksToRender) {
                 <div class="fw-bold text-truncate" style="max-width: 250px; font-size: 0.9rem;">
                     ${link.title || 'Senza Titolo'}
                 </div>
-                <div class="text-muted text-truncate" style="max-width: 250px; font-size: 0.75rem;">
-                    ${link.url}
+                <div class="text-muted text-truncate" style="max-width: 250px; font-size: 0.75rem;" title="${esc(link.urls.join('\n'))}">
+                    ${urlSummary(link)}
                 </div>
             </td>
             
@@ -285,9 +300,7 @@ function renderLinks(linksToRender) {
             
             <td>
                 <div class="d-flex gap-1 justify-content-end">
-                    <a href="${link.url}" target="_blank" class="btn btn-sm btn-outline-primary" style="padding: 0.15rem 0.4rem; font-size: 0.75rem;" title="Apri Link">
-                        Apri
-                    </a>
+                    ${openButton(link)}
                     <button class="btn btn-sm btn-outline-warning btn-edit" data-id="${link.id}" style="padding: 0.15rem 0.4rem; font-size: 0.75rem;" title="Modifica Link">
                         Modifica
                     </button>
@@ -304,6 +317,20 @@ function renderLinks(linksToRender) {
     });
     document.querySelectorAll('.btn-delete').forEach(btn => {
         btn.addEventListener('click', deleteLink);
+    });
+    document.querySelectorAll('.btn-open-all').forEach(btn => {
+        const getLink = () => allLinks.find(l => l.id === btn.dataset.id);
+        // click sinistro: apre tutti i link in nuove schede
+        btn.addEventListener('click', () => {
+            const link = getLink();
+            if (link) openUrls(link.urls, 'tabs');
+        });
+        // tasto destro: menu con nuova finestra / incognito
+        btn.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            const link = getLink();
+            if (link) showOpenMenu(e.clientX, e.clientY, link.urls);
+        });
     });
 }
 
@@ -354,8 +381,11 @@ function importJSON(e) {
             const currentLinks = data.links || [];
 
             // Opzionale: Evita duplicati identici controllando l'URL
-            const existingUrls = new Set(currentLinks.map(l => l.url));
-            const newLinksFiltered = parsedData.links.filter(l => !existingUrls.has(l.url));
+            // I backup vecchi (campo `url`) vengono convertiti in `urls`
+            const existingKeys = new Set(currentLinks.map(l => linkKey(normalizeLink(l))));
+            const newLinksFiltered = parsedData.links
+                .map(normalizeLink)
+                .filter(l => l.urls.length > 0 && !existingKeys.has(linkKey(l)));
 
             if (newLinksFiltered.length === 0) {
                 alert("Tutti i link nel file sono già presenti nell'estensione.");
@@ -363,7 +393,7 @@ function importJSON(e) {
             }
 
             // Unisci i vecchi link con i nuovi filtrati
-            allLinks = [...currentLinks, ...newLinksFiltered];
+            allLinks = [...currentLinks.map(normalizeLink), ...newLinksFiltered];
 
             // Salva nello storage locale
             await chrome.storage.local.set({ links: allLinks });
@@ -395,7 +425,7 @@ function openEditModal(e) {
     // Popola i campi del modale con i dati correnti
     document.getElementById('edit-id').value = link.id;
     document.getElementById('edit-title').value = link.title || '';
-    document.getElementById('edit-url').value = link.url || '';
+    document.getElementById('edit-urls').value = (link.urls || []).join('\n');
     document.getElementById('edit-category').value = link.category === 'Generale' ? '' : (link.category || '');
     document.getElementById('edit-auths').value = (link.authors || []).join(', ');
     document.getElementById('edit-tags').value = (link.tags || []).join(', ');
@@ -425,11 +455,21 @@ async function saveEdit(e) {
     const authsInput = document.getElementById('edit-auths').value;
     const authsArray = authsInput ? authsInput.split(',').map(a => a.trim().toLowerCase()).filter(a => a) : [];
 
+    // un URL per riga, validati e senza duplicati
+    const urls = [...new Set(
+        document.getElementById('edit-urls').value.split('\n').map(u => u.trim()).filter(Boolean)
+    )];
+    const invalidUrl = urls.find(u => { try { new URL(u); return false; } catch { return true; } });
+    if (urls.length === 0 || invalidUrl) {
+        alert(invalidUrl ? `URL non valido: ${invalidUrl}` : 'Inserisci almeno un URL.');
+        return;
+    }
+
     // Aggiorna l'oggetto mantenendo lo stato 'favorite' invariato
     allLinks[index] = {
         ...allLinks[index],
         title: document.getElementById('edit-title').value,
-        url: document.getElementById('edit-url').value,
+        urls: urls,
         category: document.getElementById('edit-category').value.trim() || 'Generale',
         tags: tagsArray,
         authors: authsArray,
@@ -451,7 +491,7 @@ async function deleteLink(e) {
 
     if (!link) return;
 
-    const confirmDelete = confirm(`Sei sicuro di voler eliminare il link "${link.title || link.url}"?`);
+    const confirmDelete = confirm(`Sei sicuro di voler eliminare il link "${link.title || link.urls[0]}"?`);
     if (!confirmDelete) return;
 
     allLinks = allLinks.filter(l => l.id !== linkId);
@@ -495,4 +535,87 @@ async function clearAllLinks() {
     renderAll();
     
     alert("Database svuotato con successo.");
+}
+
+// ---------- Apertura link (singolo o array) ----------
+
+function esc(str) {
+    return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+// Testo mostrato sotto il titolo: URL singolo, oppure badge col numero di link + primo URL
+function urlSummary(link) {
+    if (link.urls.length <= 1) return esc(link.urls[0] || '');
+    return `<span class="badge text-bg-primary me-1">${link.urls.length} link</span>${esc(link.urls[0])}`;
+}
+
+// 1 URL  -> <a> classico (il tasto destro nativo del browser continua a funzionare, incognito incluso)
+// N URL  -> bottone che apre tutto l'array; il tasto destro mostra il menu personalizzato
+function openButton(link) {
+    const style = 'padding: 0.15rem 0.4rem; font-size: 0.75rem;';
+    if (link.urls.length === 0) {
+        return `<button class="btn btn-sm btn-outline-primary" style="${style}" disabled>Apri</button>`;
+    }
+    if (link.urls.length === 1) {
+        return `<a href="${esc(link.urls[0])}" target="_blank" class="btn btn-sm btn-outline-primary" style="${style}" title="Apri Link">Apri</a>`;
+    }
+    return `<button class="btn btn-sm btn-outline-primary btn-open-all" data-id="${esc(link.id)}" style="${style}" title="Apri ${link.urls.length} link (tasto destro per altre opzioni)">Apri (${link.urls.length})</button>`;
+}
+
+async function openUrls(urls, mode) {
+    if (!urls || urls.length === 0) return;
+    try {
+        if (mode === 'window') {
+            await chrome.windows.create({ url: urls });
+        } else if (mode === 'incognito') {
+            await chrome.windows.create({ url: urls, incognito: true });
+        } else {
+            for (let i = 0; i < urls.length; i++) {
+                await chrome.tabs.create({ url: urls[i], active: i === 0 });
+            }
+        }
+    } catch (err) {
+        alert(`Impossibile aprire i link: ${err.message}`);
+    }
+}
+
+function showOpenMenu(x, y, urls) {
+    hideOpenMenu();
+
+    const menu = document.createElement('div');
+    menu.id = 'open-menu';
+    menu.className = 'dropdown-menu show shadow';
+    menu.style.position = 'fixed';
+
+    [
+        ['Apri in nuove schede', 'tabs'],
+        ['Apri in una nuova finestra', 'window'],
+        ['Apri in una finestra di navigazione in incognito', 'incognito']
+    ].forEach(([label, mode]) => {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'dropdown-item small';
+        item.textContent = label;
+        item.addEventListener('click', () => {
+            hideOpenMenu();
+            openUrls(urls, mode);
+        });
+        menu.appendChild(item);
+    });
+
+    document.body.appendChild(menu);
+
+    // tieni il menu dentro la finestra
+    const rect = menu.getBoundingClientRect();
+    menu.style.left = Math.max(4, Math.min(x, window.innerWidth - rect.width - 4)) + 'px';
+    menu.style.top = Math.max(4, Math.min(y, window.innerHeight - rect.height - 4)) + 'px';
+}
+
+function hideOpenMenu() {
+    const menu = document.getElementById('open-menu');
+    if (menu) menu.remove();
 }
